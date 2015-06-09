@@ -49,7 +49,7 @@ struct Point
   Point(const Point &p) : x (p.x), y (p.y) {}
   ~Point(){}
 
-  std::string str();
+  std::string str() const;
 
   bool operator==(const Point &other) const
   {
@@ -196,8 +196,8 @@ struct Tripointcomp
   }
 };
 
-std::vector<Point> line_to(int x0, int y0, int x1, int y1);
-std::vector<Point> line_to(Point origin, Point target);
+std::vector<Point>    line_to(int x0, int y0, int x1, int y1);
+std::vector<Point>    line_to(Point origin, Point target);
 std::vector<Tripoint> line_to(Tripoint origin, Tripoint target);
 std::vector<Tripoint> line_to(int x0, int y0, int z0, int x1, int y1, int z1);
 
@@ -205,6 +205,10 @@ int rl_dist       (int x0, int y0, int x1, int y1);
 int rl_dist       (Point origin, Point target);
 int rl_dist       (int x0, int y0, int z0, int x1, int y1, int z1);
 int rl_dist       (Tripoint origin, Tripoint target);
+// sqrt(dX^2 + dY^2)
+int trig_dist     (int x0, int y0, int x1, int y1);
+int trig_dist     (Point origin, Point target);
+// dX + dY
 int manhattan_dist(int x0, int y0, int x1, int y1);
 int manhattan_dist(Point origin, Point target);
 int manhattan_dist(int x0, int y0, int z0, int x1, int y1, int z1);
@@ -222,4 +226,7 @@ Direction_full get_general_direction(Tripoint origin, Point target);
 Direction_full get_general_direction(Point origin,    Tripoint target);
 Direction_full get_general_direction(Tripoint origin, Tripoint target);
 
+// points_at_exact_distance() returns a list of all points exactly dist tiles
+// (using rl_dist() calculation) from origin.  Basically, a circle.
+std::vector<Point> points_at_exact_distance(Point origin, int dist);
 #endif

@@ -4,10 +4,6 @@
 #include <dirent.h>
 #include <fstream>
 
-std::string DATA_DIR;
-std::string CUSS_DIR;
-std::string SAVE_DIR;
-
 bool directory_exists(std::string name)
 {
   DIR *dir;
@@ -122,24 +118,3 @@ void clear_line(std::istream& data)
   std::getline(data, junk);
 }
 
-void set_default_dirs()
-{
-  if (DATA_DIR.empty()) {
-    DATA_DIR = "./data";
-  }
-  if (CUSS_DIR.empty()) {
-    CUSS_DIR = "./cuss";
-  }
-  if (SAVE_DIR.empty()) {
-    SAVE_DIR = "./save";
-  }
-}
-
-bool set_dir(std::string &dir, std::string name)
-{
-  if (!directory_exists(name)) {
-    return false;
-  }
-  dir = name;
-  return true;
-}

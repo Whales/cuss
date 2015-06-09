@@ -1,6 +1,7 @@
-#include <sstream>
 #include "stringfunc.h"
 #include "window.h"
+#include <sstream>
+#include <math.h> // digits_in() uses log10(); move_decimal() uses pow()
 
 std::vector<std::string> break_into_lines(std::string text, int linesize)
 {
@@ -208,6 +209,29 @@ std::string capitalize(const std::string &orig)
   return ret; // All blank spaces??
 }
 
+std::string capitalize_all_words(const std::string &orig)
+{
+  std::string ret = orig;
+
+  for (int i = 0; i < ret.size(); i++) {
+    std::string tag_check = no_caps( ret.substr(i, 3) );
+    if (tag_check == "<c=") {  // It's a tag!
+// Advance until we find the end of the tag.
+      while (ret[i] != '>' && i < ret.size()) {
+        i++;
+      }
+      if (i >= ret.size()) {  // Unterminated tag, oh well
+        return ret;
+      }
+    }
+    if (ret[i] >= 'a' && ret[i] <= 'z' && (i == 0 || !is_letter(ret[i - 1]))) {
+      ret[i] = ret[i] - 'a' + 'A';
+    }
+  }
+
+  return ret;
+}
+
 std::string remove_color_tags(const std::string &orig)
 {
   std::string ret;
@@ -228,12 +252,50 @@ std::string remove_color_tags(const std::string &orig)
   return ret;
 }
 
+int tagless_length(const std::string &orig)
+{
+  std::string tagless = remove_color_tags(orig);
+  return tagless.length();
+}
+
 std::string itos(int num)
 {
   std::stringstream ret;
   ret << num;
   return ret.str();
 }
+
+int digits_in(int num)
+{
+  if (num == 0) {
+    return 1; // log10() chokes on 0
+  }
+  if (num < 0) {
+    return 1 + digits_in(0 - num);  // 1 extra for the - character
+  }
+
+  return 1 + log10(num);  // 1 extra since log10 is logarythmic
+}
+
+std::string move_decimal(int num, int moves)
+{
+  std::stringstream ret;
+  int divisor = int(pow(10, moves));
+  int decimal = num % divisor;
+  ret << num / divisor << ".";
+// We may need to add 0s so that "108" doesn't become "1.8"
+  for (int power = moves - 1; power >= 1; power--) {
+    int val = int(pow(10, power));
+    if (decimal < val) {
+      ret << "0";
+    } else {
+      power = 0;
+    }
+  }
+  ret << decimal;
+  return ret.str();
+}
+  
 
 std::string color_gradient(int value, std::vector<int> breakpoints,
                            std::vector<nc_color> colors)
@@ -261,8 +323,47 @@ std::string color_gradient(int value, std::vector<int> breakpoints,
   return ret.str();
 }
 
+std::string letters_after(long letter, bool vowel_before)
+{
+// Force lowercase.
+  if (letter >= 'A' && letter <= 'Z') {
+    letter = letter + 'a' - 'A';
+  }
+
+//abcdefghijklmnopqrstuvwxyz
+  if (vowel_before) {
+    if (is_vowel(letter)) {
+      return "bcdfghklmnpqrstvwxyz";
+    } else if (letter == 'y') {
+      return "abcdefgiklmnoprstuz";
+    } else {
+      return "abcdefghijklmnopqrstuvwyz";
+    }
+  } else {
+    switch (letter) {
+      case 'a': return "bcdefghiklmnpqrstuvwxyz";
+      case 'b': return "aeiloruy";
+      case 'c': return "aehiloru";
+      case 'd': return "aeioruy";
+      case 'e': return "abcdefghilmnpqrstuvwyz";
+      case 'f': return "aeiloruy";
+      case 'g': return "aeiloru";
+      case 'h': return "aeiou";
+      case 'i': return "abcdefglmnopqrstuvz";
+      case 'j': return "aeiou";
+    }
+  }
+  return "a";
+}
+
+bool is_letter(char ch)
+{
+  return ( (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') );
+}
+
 bool is_vowel(char ch)
 {
+// TODO: And sometimes y?
   return (ch == 'a' || ch == 'e' || ch == 'i' || ch == 'o' || ch == 'u' ||
           ch == 'A' || ch == 'E' || ch == 'I' || ch == 'O' || ch == 'U');
 }

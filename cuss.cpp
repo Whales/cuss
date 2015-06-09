@@ -141,9 +141,22 @@ bool ele_drawing::translate(long from, long to)
 // *** TEXTBOX ELEMENT ***
 void ele_textbox::draw(Window *win)
 {
- std::vector<std::string> broken = break_into_lines(*text, sizex);
+ int effective_sizex = sizex;
+ if (selectable)
+  effective_sizex--;
+
+ std::vector<std::string> broken = break_into_lines(*text, effective_sizex);
  
  win->clear_area(posx, posy, posx + sizex - 1, posy + sizey - 1);
+
+// Make sure offset isn't too high
+ if (offset > broken.size() - sizey) {
+  offset = broken.size() - sizey;
+ }
+
+ if (offset < 0) {
+  offset = 0;
+ }
 
  for (int i = 0; i + offset <= broken.size() && i < sizey; i++) {
   int ypos, index;
@@ -233,16 +246,16 @@ bool ele_textbox::ref_data(std::string *data)
 bool ele_textbox::set_data(int data)
 {
  std::vector<std::string> broken = break_into_lines(*text, sizex);
- if (data <= 0)
+ offset = data;
+ int text_size = broken.size(); // Since broken.size() is an unsigned int
+ if (offset > 1 + text_size - sizey)
+  offset = 1 + text_size - sizey;
+ if (offset < 0)
   offset = 0;
- else if (data > broken.size() - 1)
-  offset = broken.size() - 1;
 /*
  else if (data > sizey - broken.size())
   offset = sizey - broken.size();
 */
- else
-  offset = data;
  return true;
 }
 
@@ -274,7 +287,15 @@ void ele_list::draw(Window *win)
   if (!selected)
    hilite = bg;
   if (align == ALIGN_RIGHT) {
-    win->putstr_r(posx, ypos, fg, hilite, sizex, (*list)[index]);
+/* If it's selectable, we need an extra space at the end to compensate for the
+ * scroll bar; otherwise the scroll bar will cover up the last name in the list.
+ * This is hacky but it's good enough for now.
+ */
+    if (selectable) {
+      win->putstr_r(posx, ypos, fg, hilite, sizex, (*list)[index] + " ");
+    } else {
+      win->putstr_r(posx, ypos, fg, hilite, sizex, (*list)[index]);
+    }
   } else if (align == ALIGN_CENTER) {
     win->putstr_c(posx, ypos, fg, hilite, sizex, (*list)[index]);
   } else {
@@ -1351,6 +1372,52 @@ std::vector<std::string> interface::get_str_list(std::string name)
  return ele->get_str_list();
 }
 
+int interface::element_height(std::string name)
+{
+  element* ele = find_by_name(name);
+  if (!ele) {
+    return -1;
+  }
+  return ele->sizey;
+}
+
+int interface::element_width(std::string name)
+{
+  element* ele = find_by_name(name);
+  if (!ele) {
+    return -1;
+  }
+  return ele->sizex;
+}
+
+int interface::element_posx(std::string name)
+{
+  element* ele = find_by_name(name);
+  if (!ele) {
+    return -1;
+  }
+  return ele->posx;
+}
+
+int interface::element_posy(std::string name)
+{
+  element* ele = find_by_name(name);
+  if (!ele) {
+    return -1;
+  }
+  return ele->posy;
+}
+
+Point interface::element_pos(std::string name)
+{
+  element* ele = find_by_name(name);
+  if (!ele) {
+    return Point(-1, -1);
+  }
+  return Point(ele->posx, ele->posy);
+}
+
+
 std::vector<std::string> interface::binding_list()
 {
  std::vector<std::string> ret;
@@ -1503,7 +1570,7 @@ bool interface::handle_action(long ch)
   return false;
 
  binding* used = &(bindings[ch]);
- element* found = (used->target == "" ||used->target == "<S>" ? selected() :
+ element* found = (used->target == "" || used->target == "<S>" ? selected() :
                    find_by_name(used->target));
 
  switch (used->act) {

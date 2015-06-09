@@ -6,6 +6,20 @@
 
 #define SGN(a) (((a)<0) ? -1 : 1)
 
+std::string Point::str() const
+{
+  std::stringstream ret;
+  ret << "[" << x << ":" << y << "]";
+  return ret.str();
+}
+
+std::string Tripoint::str()
+{
+  std::stringstream ret;
+  ret << "[" << x << ":" << y << ":" << z << "]";
+  return ret.str();
+}
+
 std::vector <Point> line_to(int x0, int y0, int x1, int y1)
 {
   int t = 0;
@@ -189,23 +203,19 @@ int rl_dist(int x0, int y0, int z0, int x1, int y1, int z1)
   return dz;
 }
 
-std::string Point::str()
-{
-  std::stringstream ret;
-  ret << "[" << x << ":" << y << "]";
-  return ret.str();
-}
-
-std::string Tripoint::str()
-{
-  std::stringstream ret;
-  ret << "[" << x << ":" << y << ":" << z << "]";
-  return ret.str();
-}
-
 int rl_dist(Tripoint origin, Tripoint target)
 {
   return rl_dist(origin.x, origin.y, origin.z, target.x, target.y, target.z);
+}
+
+int trig_dist(int x0, int y0, int x1, int y1)
+{
+  return int( sqrt( double( pow(x1 - x0, 2.0) + pow(y1 - y0, 2.0) ) ) );
+}
+
+int trig_dist(Point origin, Point target)
+{
+  return trig_dist(origin.x, origin.y, target.x, target.y);
 }
 
 int manhattan_dist(int x0, int y0, int x1, int y1)
@@ -297,6 +307,18 @@ Direction_full get_general_direction(Tripoint origin, Tripoint target)
 {
   return get_general_direction( Point(origin.x, origin.y),
                                 Point(target.x, target.y) );
+}
+
+std::vector<Point> points_at_exact_distance(Point origin, int dist)
+{
+  std::vector<Point> ret;
+  for (int n = 0 - dist; n <= dist; n++) {
+    ret.push_back( Point( origin.x - dist, origin.y + n    ) );
+    ret.push_back( Point( origin.x + dist, origin.y + n    ) );
+    ret.push_back( Point( origin.x + n   , origin.y - dist ) );
+    ret.push_back( Point( origin.x + n   , origin.y + dist ) );
+  }
+  return ret;
 }
 
 std::string Direction_name(Direction dir)

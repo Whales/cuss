@@ -243,7 +243,7 @@ nc_color opposite(nc_color orig)
  return c_null;
 }
 
-nc_color contract(nc_color orig)
+nc_color contrast(nc_color orig)
 {
  switch (orig) {
   case c_black:   return c_white;
@@ -270,9 +270,23 @@ nc_color contract(nc_color orig)
 
 bool is_bright(nc_color col)
 {
-  return (col == c_dkgray   || col == c_white   || col == c_ltred  ||
-          col == c_ltgreen  || col == c_ltblue  || col == c_ltcyan ||
-          col == c_pink     || col == c_yellow);
+  return (int(col) >= c_dkgray && int(col) <= c_yellow);
+}
+
+nc_color brighten(nc_color col)
+{
+  switch (col) {
+    case c_black:   return c_dkgray;
+    case c_ltgray:  return c_white;
+    case c_red:     return c_ltred;
+    case c_green:   return c_ltgreen;
+    case c_blue:    return c_ltblue;
+    case c_cyan:    return c_ltcyan;
+    case c_magenta: return c_pink;
+    case c_brown:   return c_yellow;
+    default:        return col;
+  }
+  return c_null;
 }
 
 nc_color non_bright(nc_color col)
